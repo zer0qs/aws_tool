@@ -27,8 +27,18 @@ pip3 íntall -r requirement.txt
 
 - Using Access key and Secret key to configure aws work with python
 
+## Set up  AWS account 
+- Enable All AWS region to scan, by default, AWS enable 17 region
+  Access [Manage Region](https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/account?AWS-Regions)
+  Enable All region
+  <img width="1323" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/49157ce4-22c2-4051-856c-fd741b641d45">
+
 ## Using 
 ```
 python3 ami_scan.py
 ```
-![image](https://github.com/zer0qs/aws_tool/assets/83699106/b9761349-38c4-411d-8c08-98e1c98d51d8)
+<img width="594" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/b9fc59bc-59bf-4347-a103-fc8c61c6516b">
+
+Check the data in MongoDB
+
+<img width="1717" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/a9a396be-e503-4b63-bb5e-61250fe50b6a">
