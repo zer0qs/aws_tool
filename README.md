@@ -29,7 +29,9 @@ pip3 íntall -r requirement.txt
 
 ## Set up  AWS account 
 - Enable All AWS region to scan, by default, AWS enable 17 region
+  
   Access [Manage Region](https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/account?AWS-Regions)
+
   Enable All region
   <img width="1323" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/49157ce4-22c2-4051-856c-fd741b641d45">
 
