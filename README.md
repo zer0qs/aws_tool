@@ -36,6 +36,7 @@ pip3 íntall -r requirement.txt
   <img width="1323" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/49157ce4-22c2-4051-856c-fd741b641d45">
 
 ## Using 
+It may take a long time to complete the scan if you want to test, set the `MaxResults` at line 34 to decrease the output data
 ```
 python3 ami_scan.py
 ```
