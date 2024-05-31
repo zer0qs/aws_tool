@@ -1,6 +1,8 @@
 import boto3
 from pymongo import MongoClient
 import json
+from collections import Counter
+
 
 def list_all_regions():
     """Get all AWS regions."""
@@ -44,6 +46,12 @@ def count_amis_by_region():
         for key, value in region.items():
             print(f"{key}: {value}")
 
+def remove_ownerID_more_than_50(amis):
+    ownerid = [ami['OwnerId'] for ami in amis]
+    owner_count = Counter(ownerid)
+    owners_with_more_than_50_amis = {owner_id for owner_id, count in owner_count.items() if count >= 50}
+    filtered_ami_list = [ami for ami in amis if ami['OwnerId'] not in owners_with_more_than_50_amis]
+
 def insert_to_mongodb(data, collection_name='ami_data'):
     client = MongoClient('mongodb://localhost:27017/')
     db = client['AWS_AMI']  # Thay your_database_name bằng tên database thực tế của bạn
@@ -62,6 +70,7 @@ def insert_to_mongodb(data, collection_name='ami_data'):
 
 if __name__ == "__main__":
     public_amis = list_all_public_amis()
-    print(f"Total public AMIs found: {len(public_amis)}")
-    insert_to_mongodb(public_amis, collection_name='ami_data')
+    amis_after_filter = remove_ownerID_more_than_50(public_amis)
+    print(f"Total public valid AMIs found: {len(amis_after_filter)}")
+    insert_to_mongodb(amis_after_filter, collection_name='ami_data')
     
