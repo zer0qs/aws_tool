@@ -50,6 +50,8 @@ def remove_ownerID_more_than_50(amis):
     ownerid = [ami['OwnerId'] for ami in amis]
     owner_count = Counter(ownerid)
     owners_with_more_than_50_amis = {owner_id for owner_id, count in owner_count.items() if count >= 50}
+    print('Found '+ str(len(owners_with_more_than_50_amis))+' OwnerID that have more than 50 AMIs')
+    print('Removing AMIs of Owner who have more than 50 AMIs...')
     filtered_ami_list = [ami for ami in amis if ami['OwnerId'] not in owners_with_more_than_50_amis]
 
 def insert_to_mongodb(data, collection_name='ami_data'):
