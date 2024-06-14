@@ -40,8 +40,10 @@ It may take a long time to complete the scan if you want to test, set the `MaxRe
 ```
 python3 ami_scan.py
 ```
-<img width="594" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/b9fc59bc-59bf-4347-a103-fc8c61c6516b">
+<img width="650" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/8f075ea8-df29-4d5d-941e-a45fdfac2116">
+
 
 Check the data in MongoDB
 
-<img width="1717" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/a9a396be-e503-4b63-bb5e-61250fe50b6a">
+![Uploading image.png…]()
+
