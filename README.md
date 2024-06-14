@@ -45,5 +45,6 @@ python3 ami_scan.py
 
 Check the data in MongoDB
 
-![Uploading image.png…]()
+<img width="1466" alt="image" src="https://github.com/zer0qs/aws_tool/assets/83699106/3991ca5d-bc7a-4ca4-b3c7-9eb550ccfd84">
+
 
