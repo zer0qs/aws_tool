@@ -2,6 +2,7 @@ import boto3
 from pymongo import MongoClient
 import json
 from collections import Counter
+import os
 
 
 def list_all_regions():
@@ -19,10 +20,10 @@ def get_all_public_amis_in_region(region_name):
                 'Name': 'is-public',
                 'Values': ['true']
             }
-        ]#, MaxResults= 6 |-> set if want to restrict number of AMIs to test
+        ], #MaxResults= 50 #|-> set if want to restrict number of AMIs to test
     )
     # Remove AWS Marketplace AMIs, remove Image owner of amazone and remove RootDevice type = instance store 
-    for ami in response["Images"]:
+    for ami in response["Images"][:]:
         if ('ProductCodes' in ami) or ami.get('ImageOwnerAlias') == 'amazon' or ami.get('RootDeviceType') == 'instance-store':
             response["Images"].remove(ami)
     return response['Images']
@@ -32,31 +33,43 @@ def list_all_public_amis():
     """List all public AMIs in all AWS regions."""
     regions = list_all_regions()
     all_public_amis = []
+    x_count = 0
     for region in regions:
         print(f"Fetching public AMIs in region: {region} - Total public AMIs found: ", end='')
         region_amis = get_all_public_amis_in_region(region)
+        region_amis = remove_ownerID_more_than_50(region_amis)
+        region_amis = remove_big_volumn_size(region_amis)
         print(len(region_amis))
-        # count_by_region = {region:len(region_amis)}
-        # count_regions.append(count_by_region)
-        all_public_amis.extend(region_amis)
-    return all_public_amis
-
-def count_amis_by_region():
-    for region in count_regions:
-        for key, value in region.items():
-            print(f"{key}: {value}")
-
+        x_count += len(region_amis)
+        all_region_amis= {}
+        all_region_amis[region] = list_ami_id(region_amis)
+        all_public_amis.append(all_region_amis)
+    return all_public_amis,x_count
+def list_ami_id(amis):
+    ami_ids=[]
+    for ami in amis:
+        ami_ids.append(ami['ImageId'])
+    return ami_ids
 def remove_ownerID_more_than_50(amis):
     ownerid = [ami['OwnerId'] for ami in amis]
     owner_count = Counter(ownerid)
     owners_with_more_than_50_amis = {owner_id for owner_id, count in owner_count.items() if count >= 50}
-    print('Found '+ str(len(owners_with_more_than_50_amis))+' OwnerID that have more than 50 AMIs')
-    print('Removing AMIs of Owner who have more than 50 AMIs...')
     filtered_ami_list = [ami for ami in amis if ami['OwnerId'] not in owners_with_more_than_50_amis]
+    return filtered_ami_list
+def remove_big_volumn_size(amis):
+    if amis:
+        for ami in amis[:]:
+            bdm = ami['BlockDeviceMappings']
+            ebs_items = [x['Ebs'] for x in bdm if 'Ebs' in x.keys()]
+            ebs_items = [x for x in ebs_items if 'SnapshotId' in x.keys()]
+            big_snapshots = [x for x in ebs_items if x['VolumeSize'] > 200]
+            if len(ebs_items) > 3 or len(big_snapshots) > 0:
+                amis.remove(ami)
+    return amis
 
 def insert_to_mongodb(data, collection_name='ami_data'):
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AWS_AMI']  # Thay your_database_name bằng tên database thực tế của bạn
+    db = client['AWS_AMI']
     collection = db[collection_name]
     try:
         # Ensure public_amis is not empty
@@ -70,9 +83,55 @@ def insert_to_mongodb(data, collection_name='ami_data'):
     except Exception as e:
         print("An error occurred:", e)
 
+def get_amis(scan):
+    ami_dict = {}
+    for region_data in scan:
+        for region, amis in region_data.items():
+            if region not in ami_dict:
+                ami_dict[region] = set()
+            ami_dict[region].update(amis)
+    return ami_dict
+
+def find_new_amis(previous_scan, current_scan):
+    previous_amis = get_amis(previous_scan)
+    current_amis = get_amis(current_scan)
+    
+    new_amis = {}
+    for region in current_amis:
+        if region in previous_amis:
+            new_amis[region] = list(current_amis[region] - previous_amis[region])
+        else:
+            new_amis[region] = list(current_amis[region])
+    
+    # Filter out empty entries
+    new_amis = {region: amis for region, amis in new_amis.items() if amis}
+    count_new = 0
+    for region in new_amis:
+        count_new +=len(region)
+    return new_amis,count_new
+
 if __name__ == "__main__":
-    public_amis = list_all_public_amis()
-    amis_after_filter = remove_ownerID_more_than_50(public_amis)
-    print(f"Total public valid AMIs found: {len(amis_after_filter)}")
-    insert_to_mongodb(amis_after_filter, collection_name='ami_data')
+    public_amis, x_count = list_all_public_amis()
+    print(f"Total public valid AMIs found: {x_count}")
+    if os.path.isfile("old_ami.json"):
+        with open("old_ami.json", "r") as file:
+            previous_scan = json.load(file)
+        # Find new AMIs
+        new_amis,count_new = find_new_amis(previous_scan, public_amis)
+        print("Found: "+str(count_new)+" new AMIs in current scan, it is stored in new_ami.json")
+        if new_amis:
+            with open("old_ami.json", "w") as file:
+                json.dump(public_amis, file, indent=4)
+            with open("new_ami.json", "w") as file:
+                json.dump(new_amis, file, indent=4)
+    else:
+        with open("old_ami.json", "w") as file:
+            json.dump(public_amis, file, indent=4)
+    
+
+    insert_to_mongodb(public_amis, collection_name='ami_data')
+
+
+ 
+
     
